@@ -27,7 +27,7 @@ RUN_ID = str(uuid.uuid4())[:8]
 # EXCEPTIONS
 # ==============================
 class RateLimitError(Exception):
-    """Raised when Alpha Vantage returns a rate-limit Note."""
+    """Raised when Alpha Vantage returns a rate-limit Note or Information response."""
 
 
 # ==============================
@@ -80,9 +80,13 @@ def fetch_daily(symbol: str, since_date=None) -> list:
     resp.raise_for_status()
     data = resp.json()
 
-    # Soft failure — stop the loop but don't fail the Airflow task
+    # Soft failure — stop the loop but don't fail the Airflow task.
+    # Alpha Vantage uses "Note" for per-minute limits and "Information"
+    # for daily limits — both must be treated the same way.
     if "Note" in data:
         raise RateLimitError(data["Note"])
+    if "Information" in data:
+        raise RateLimitError(data["Information"])
 
     # Hard failures — propagate and fail the task
     if "Error Message" in data:
