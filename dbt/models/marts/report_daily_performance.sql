@@ -4,10 +4,10 @@ with facts as (
     select * from {{ ref('fact_etf_prices') }}
 ),
 dates as (
-    select * from marts.dim_date
+    select * from {{ source('marts', 'dim_date') }}
 ),
 etfs as (
-    select * from marts.dim_etf where is_current = true
+    select * from {{ source('marts', 'dim_etf') }} where is_current = true
 )
 select
     d.full_date,
@@ -31,4 +31,3 @@ from facts f
 join dates d on f.date_key = d.date_key
 join etfs  e on f.etf_key  = e.etf_key
 order by d.full_date desc, f.daily_change_pct desc
-

@@ -7,13 +7,17 @@ services:
     networks:
       - elt_network
     environment:
-      POSTGRES_DB: destination_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: ${DEST_DB_NAME}
+      POSTGRES_USER: ${DEST_DB_USER}
+      POSTGRES_PASSWORD: ${DEST_DB_PASSWORD}
     volumes:
       - dest_pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d destination_db || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DEST_DB_USER} -d ${DEST_DB_NAME} || exit 1",
+        ]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -23,13 +27,17 @@ services:
     networks:
       - elt_network
     environment:
-      - POSTGRES_USER=airflow
-      - POSTGRES_PASSWORD=airflow
-      - POSTGRES_DB=airflow
+      POSTGRES_USER: ${AIRFLOW_DB_USER}
+      POSTGRES_PASSWORD: ${AIRFLOW_DB_PASSWORD}
+      POSTGRES_DB: ${AIRFLOW_DB_NAME}
     volumes:
       - airflow_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${AIRFLOW_DB_USER} -d ${AIRFLOW_DB_NAME} || exit 1",
+        ]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -42,8 +50,8 @@ services:
     networks:
       - elt_network
     environment:
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
-      - AIRFLOW__CORE__FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLt0nfdstY=
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${AIRFLOW__DATABASE__SQL_ALCHEMY_CONN}
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
     command: bash -c "airflow db init && airflow users create --username airflow --password password --firstname John --lastname Doe --role Admin --email admin@example.com"
 
   webserver:
@@ -66,17 +74,17 @@ services:
       - ~/.dbt:/root/.dbt:z
       - /run/user/1000/podman/podman.sock:/var/run/docker.sock
     environment:
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
-      - AIRFLOW__CORE__FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLt0nfdstY=
-      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__WEBSERVER__SECRET_KEY=supersecretkey
-      - LOAD_EX=n
-      - ALPHAVANTAGE_API_KEY=FO1Y6G7WBGLAYNWV
-      - DEST_DB_HOST=destination_postgres
-      - DEST_DB_PORT=5432
-      - DEST_DB_NAME=destination_db
-      - DEST_DB_USER=postgres
-      - DEST_DB_PASSWORD=secret
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${AIRFLOW__DATABASE__SQL_ALCHEMY_CONN}
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
+      AIRFLOW__CORE__EXECUTOR: ${AIRFLOW__CORE__EXECUTOR}
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__WEBSERVER__SECRET_KEY}
+      LOAD_EX: ${LOAD_EX}
+      ALPHAVANTAGE_API_KEY: ${ALPHAVANTAGE_API_KEY}
+      DEST_DB_HOST: ${DEST_DB_HOST}
+      DEST_DB_PORT: ${DEST_DB_PORT}
+      DEST_DB_NAME: ${DEST_DB_NAME}
+      DEST_DB_USER: ${DEST_DB_USER}
+      DEST_DB_PASSWORD: ${DEST_DB_PASSWORD}
     command: webserver
     restart: unless-stopped
 
@@ -98,17 +106,17 @@ services:
       - ~/.dbt:/root/.dbt:z
       - /run/user/1000/podman/podman.sock:/var/run/docker.sock
     environment:
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
-      - AIRFLOW__CORE__FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLt0nfdstY=
-      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__WEBSERVER__SECRET_KEY=supersecretkey
-      - LOAD_EX=n
-      - ALPHAVANTAGE_API_KEY=FO1Y6G7WBGLAYNWV
-      - DEST_DB_HOST=destination_postgres
-      - DEST_DB_PORT=5432
-      - DEST_DB_NAME=destination_db
-      - DEST_DB_USER=postgres
-      - DEST_DB_PASSWORD=secret
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${AIRFLOW__DATABASE__SQL_ALCHEMY_CONN}
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
+      AIRFLOW__CORE__EXECUTOR: ${AIRFLOW__CORE__EXECUTOR}
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__WEBSERVER__SECRET_KEY}
+      LOAD_EX: ${LOAD_EX}
+      ALPHAVANTAGE_API_KEY: ${ALPHAVANTAGE_API_KEY}
+      DEST_DB_HOST: ${DEST_DB_HOST}
+      DEST_DB_PORT: ${DEST_DB_PORT}
+      DEST_DB_NAME: ${DEST_DB_NAME}
+      DEST_DB_USER: ${DEST_DB_USER}
+      DEST_DB_PASSWORD: ${DEST_DB_PASSWORD}
     command: scheduler
     restart: unless-stopped
 
@@ -123,12 +131,12 @@ services:
     volumes:
       - ./elt:/app:z
     environment:
-      - DEST_DB_HOST=destination_postgres
-      - DEST_DB_PORT=5432
-      - DEST_DB_NAME=destination_db
-      - DEST_DB_USER=postgres
-      - DEST_DB_PASSWORD=secret
-      - ALPHAVANTAGE_API_KEY=FO1Y6G7WBGLAYNWV
+      DEST_DB_HOST: ${DEST_DB_HOST}
+      DEST_DB_PORT: ${DEST_DB_PORT}
+      DEST_DB_NAME: ${DEST_DB_NAME}
+      DEST_DB_USER: ${DEST_DB_USER}
+      DEST_DB_PASSWORD: ${DEST_DB_PASSWORD}
+      ALPHAVANTAGE_API_KEY: ${ALPHAVANTAGE_API_KEY}
 
   dbt:
     build:

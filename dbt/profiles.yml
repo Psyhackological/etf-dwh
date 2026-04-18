@@ -3,11 +3,10 @@ etf_dwh:
   outputs:
     dev:
       type: postgres
-      host: destination_postgres
-      user: postgres
-      password: secret
-      port: 5432
-      dbname: destination_db
+      host: "{{ env_var('DEST_DB_HOST', 'destination_postgres') }}"
+      port: "{{ env_var('DEST_DB_PORT', '5432') | int }}"
+      dbname: "{{ env_var('DEST_DB_NAME', 'destination_db') }}"
+      user: "{{ env_var('DEST_DB_USER', 'postgres') }}"
+      password: "{{ env_var('DEST_DB_PASSWORD') }}"
       schema: public
       threads: 1
-

@@ -3,11 +3,11 @@ with facts as (
     select * from {{ ref('fact_etf_prices') }}
 ),
 dates as (
-    select * from marts.dim_date
+    select * from {{ source('marts', 'dim_date') }}
     where full_date >= current_date - interval '30 days'
 ),
 etfs as (
-    select * from marts.dim_etf where is_current = true
+    select * from {{ source('marts', 'dim_etf') }} where is_current = true
 ),
 base as (
     select
@@ -49,4 +49,3 @@ from base b
 join bookends bk on b.symbol = bk.symbol
 group by b.symbol, b.etf_name, b.category, bk.latest_close, bk.first_close
 order by volatility_stddev asc
-

@@ -18,17 +18,10 @@ SELECT
     s.close,
     s.volume,
 
-    s.close - s.open AS daily_change,
-    CASE 
-        WHEN s.open = 0 THEN NULL
-        ELSE (s.close - s.open) / s.open
-    END AS daily_change_pct,
-
-    s.high - s.low AS daily_spread,
-    CASE 
-        WHEN s.low = 0 THEN NULL
-        ELSE (s.high - s.low) / s.low
-    END AS daily_spread_pct,
+    s.daily_change,
+    s.daily_change_pct,
+    s.daily_spread,
+    s.daily_spread_pct,
 
     NOW() AS loaded_at
 
