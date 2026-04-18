@@ -48,9 +48,14 @@ with DAG(
         bash_command="cd /opt/dbt && dbt run --select report_daily_performance report_volatility_ranking report_etf_correlation --profiles-dir /opt/dbt",
     )
 
+    dbt_olap = BashOperator(
+        task_id="dbt_olap",
+        bash_command="cd /opt/dbt && dbt run --select olap_etf_cube --profiles-dir /opt/dbt",
+    )
+
     dbt_test = BashOperator(
         task_id="dbt_test",
         bash_command="cd /opt/dbt && dbt test --profiles-dir /opt/dbt",
     )
 
-    extract_and_load_raw >> dbt_staging >> dbt_facts >> dbt_reports >> dbt_test
+    extract_and_load_raw >> dbt_staging >> dbt_facts >> [dbt_reports, dbt_olap] >> dbt_test

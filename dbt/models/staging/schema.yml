@@ -50,3 +50,6 @@ models:
 
   - name: report_etf_correlation
     description: "Raport 3: Korelacja ETF vs SPY (90d)"
+
+  - name: olap_etf_cube
+    description: "Kostka OLAP: agregacje wielowymiarowe (symbol × kategoria × rok × kwartał) przy użyciu PostgreSQL CUBE()"
