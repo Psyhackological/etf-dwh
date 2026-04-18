@@ -120,36 +120,6 @@ services:
     command: scheduler
     restart: unless-stopped
 
-  elt:
-    build:
-      context: ./elt
-    networks:
-      - elt_network
-    depends_on:
-      destination_postgres:
-        condition: service_healthy
-    volumes:
-      - ./elt:/app:z
-    environment:
-      DEST_DB_HOST: ${DEST_DB_HOST}
-      DEST_DB_PORT: ${DEST_DB_PORT}
-      DEST_DB_NAME: ${DEST_DB_NAME}
-      DEST_DB_USER: ${DEST_DB_USER}
-      DEST_DB_PASSWORD: ${DEST_DB_PASSWORD}
-      ALPHAVANTAGE_API_KEY: ${ALPHAVANTAGE_API_KEY}
-
-  dbt:
-    build:
-      context: ./dbt
-    networks:
-      - elt_network
-    depends_on:
-      destination_postgres:
-        condition: service_healthy
-    volumes:
-      - ./dbt:/usr/app/dbt:z
-      - ./dbt/profiles.yml:/root/.dbt/profiles.yml:z
-
 networks:
   elt_network:
     driver: bridge

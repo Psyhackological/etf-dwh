@@ -22,19 +22,6 @@ CREATE TABLE IF NOT EXISTS raw.etf_prices (
     UNIQUE (symbol, price_date)
 );
 
-CREATE TABLE IF NOT EXISTS raw.etl_audit_log (
-    id              SERIAL PRIMARY KEY,
-    run_id          VARCHAR(50)  NOT NULL,
-    symbol          VARCHAR(10),
-    status          VARCHAR(20)  NOT NULL,
-    rows_fetched    INT          DEFAULT 0,
-    rows_inserted   INT          DEFAULT 0,
-    rows_updated    INT          DEFAULT 0,
-    error_message   TEXT,
-    started_at      TIMESTAMP    NOT NULL,
-    finished_at     TIMESTAMP    DEFAULT NOW()
-);
-
 CREATE TABLE IF NOT EXISTS raw.etl_watermark (
     symbol           VARCHAR(10)  PRIMARY KEY,
     last_loaded_date DATE         NOT NULL,
@@ -133,4 +120,3 @@ CREATE TABLE IF NOT EXISTS marts.fact_etf_prices (
     loaded_at        TIMESTAMP    DEFAULT NOW(),
     UNIQUE (date_key, etf_key)
 );
-
