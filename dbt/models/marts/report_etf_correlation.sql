@@ -3,11 +3,11 @@ with facts as (
     select * from {{ ref('fact_etf_prices') }}
 ),
 dates as (
-    select * from marts.dim_date
+    select * from {{ source('marts', 'dim_date') }}
     where full_date >= current_date - interval '90 days'
 ),
 etfs as (
-    select * from marts.dim_etf where is_current = true
+    select * from {{ source('marts', 'dim_etf') }} where is_current = true
 ),
 daily_returns as (
     select
@@ -41,4 +41,3 @@ join spy_returns sr on dr.full_date = sr.full_date
 where dr.symbol != 'SPY'
 group by dr.symbol
 order by correlation_vs_spy desc
-
