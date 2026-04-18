@@ -120,6 +120,22 @@ services:
     command: scheduler
     restart: unless-stopped
 
+  metabase:
+    image: docker.io/metabase/metabase:v0.52.7
+    ports:
+      - "3000:3000"
+    networks:
+      - elt_network
+    depends_on:
+      destination_postgres:
+        condition: service_healthy
+    volumes:
+      - metabase_data:/metabase-data
+    environment:
+      MB_DB_TYPE: h2
+      MB_DB_FILE: /metabase-data/metabase.db
+    restart: unless-stopped
+
 networks:
   elt_network:
     driver: bridge
@@ -127,3 +143,4 @@ networks:
 volumes:
   airflow_db_data:
   dest_pg_data:
+  metabase_data:
