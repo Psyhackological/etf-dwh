@@ -1,11 +1,8 @@
 import sys
-sys.path.insert(0, '/opt/airflow/elt')
-
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
-from elt_script import run_etl
 
 default_args = {
     "owner": "airflow",
@@ -13,6 +10,13 @@ default_args = {
     "retry_delay": timedelta(minutes=5),
     "email_on_failure": False,
 }
+
+
+def run_elt():
+    sys.path.insert(0, '/opt/airflow/elt')
+    from elt_script import run_etl
+    run_etl()
+
 
 with DAG(
     dag_id="etf_dwh_pipeline",
@@ -26,7 +30,7 @@ with DAG(
 
     extract_and_load_raw = PythonOperator(
         task_id="extract_and_load_raw",
-        python_callable=run_etl,
+        python_callable=run_elt,
     )
 
     dbt_staging = BashOperator(

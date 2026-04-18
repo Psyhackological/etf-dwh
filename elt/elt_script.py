@@ -24,6 +24,13 @@ RUN_ID = str(uuid.uuid4())[:8]
 
 
 # ==============================
+# EXCEPTIONS
+# ==============================
+class RateLimitError(Exception):
+    """Raised when Alpha Vantage returns a rate-limit Note."""
+
+
+# ==============================
 # DB HELPERS
 # ==============================
 def get_connection():
@@ -53,7 +60,7 @@ def update_watermark(cursor, symbol: str, last_date: date):
 
 
 # ==============================
-# API FETCH (CRITICAL FIX HERE)
+# API FETCH
 # ==============================
 def fetch_daily(symbol: str, since_date=None) -> list:
     print(f"[{symbol}] Fetching data...")
@@ -73,15 +80,14 @@ def fetch_daily(symbol: str, since_date=None) -> list:
     resp.raise_for_status()
     data = resp.json()
 
-    # ✅ FAIL ON RATE LIMIT
+    # Soft failure — stop the loop but don't fail the Airflow task
     if "Note" in data:
-        raise RuntimeError(f"API RATE LIMIT HIT: {data['Note']}")
+        raise RateLimitError(data["Note"])
 
-    # ✅ FAIL ON API ERROR
+    # Hard failures — propagate and fail the task
     if "Error Message" in data:
         raise RuntimeError(f"API ERROR: {data['Error Message']}")
 
-    # ✅ FAIL IF DATA MISSING
     if "Time Series (Daily)" not in data:
         raise RuntimeError(f"INVALID API RESPONSE: {data}")
 
@@ -177,12 +183,18 @@ def run_etl():
                 ins, upd = load_to_postgres(rows)
                 print(f"[{symbol}] inserted={ins}, updated={upd}")
 
+        except RateLimitError as e:
+            # API daily/per-minute cap hit — remaining symbols would also fail,
+            # so stop early but let the task succeed so dbt can run on
+            # whatever data was already loaded.
+            print(f"[{symbol}] RATE LIMIT reached, stopping early: {e}")
+            break
+
         except Exception as e:
             print(f"[{symbol}] ERROR: {e}")
-            # ✅ THIS FAILS AIRFLOW TASK
             raise
 
-        # ✅ avoid rate limit
+        # Avoid hitting the per-minute rate limit between symbols
         if i < len(SYMBOLS) - 1:
             time.sleep(12)
 
