@@ -1,0 +1,52 @@
+version: 2
+
+models:
+  - name: stg_etf_prices
+    description: "Staging: oczyszczone dane dzienne ETF z Alpha Vantage"
+    columns:
+      - name: symbol
+        description: "Ticker ETF"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["SPY", "QQQ", "VOO", "IVV", "GLD"]
+
+      - name: price_date
+        tests:
+          - not_null
+
+      - name: open
+        tests:
+          - not_null
+
+      - name: close
+        tests:
+          - not_null
+
+      - name: volume
+        tests:
+          - not_null
+
+  - name: fact_etf_prices
+    description: "Tabela faktów: dzienne ceny ETF (Star Schema)"
+    columns:
+      - name: date_key
+        tests:
+          - not_null
+
+      - name: etf_key
+        tests:
+          - not_null
+
+      - name: market_key
+        tests:
+          - not_null
+
+  - name: report_daily_performance
+    description: "Raport 1: Dzienny performance ETF"
+
+  - name: report_volatility_ranking
+    description: "Raport 2: Ranking zmienności ETF (30d)"
+
+  - name: report_etf_correlation
+    description: "Raport 3: Korelacja ETF vs SPY (90d)"

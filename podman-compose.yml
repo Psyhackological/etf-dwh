@@ -1,0 +1,151 @@
+services:
+  destination_postgres:
+    build:
+      context: ./init
+    ports:
+      - "5434:5432"
+    networks:
+      - elt_network
+    environment:
+      POSTGRES_DB: destination_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - dest_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d destination_db || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  postgres:
+    image: docker.io/library/postgres:17
+    networks:
+      - elt_network
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    volumes:
+      - airflow_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  init-airflow:
+    image: docker.io/apache/airflow:2.9.3
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - elt_network
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLt0nfdstY=
+    command: bash -c "airflow db init && airflow users create --username airflow --password password --firstname John --lastname Doe --role Admin --email admin@example.com"
+
+  webserver:
+    build:
+      context: ./airflow
+    user: root
+    depends_on:
+      postgres:
+        condition: service_healthy
+      init-airflow:
+        condition: service_completed_successfully
+    networks:
+      - elt_network
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags:z
+      - ./elt:/opt/airflow/elt:z
+      - ./dbt:/opt/dbt:z
+      - ~/.dbt:/root/.dbt:z
+      - /run/user/1000/podman/podman.sock:/var/run/docker.sock
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLt0nfdstY=
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__WEBSERVER__SECRET_KEY=supersecretkey
+      - LOAD_EX=n
+      - ALPHAVANTAGE_API_KEY=FO1Y6G7WBGLAYNWV
+      - DEST_DB_HOST=destination_postgres
+      - DEST_DB_PORT=5432
+      - DEST_DB_NAME=destination_db
+      - DEST_DB_USER=postgres
+      - DEST_DB_PASSWORD=secret
+    command: webserver
+    restart: unless-stopped
+
+  scheduler:
+    build:
+      context: ./airflow
+    user: root
+    depends_on:
+      postgres:
+        condition: service_healthy
+      init-airflow:
+        condition: service_completed_successfully
+    networks:
+      - elt_network
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags:z
+      - ./elt:/opt/airflow/elt:z
+      - ./dbt:/opt/dbt:z
+      - ~/.dbt:/root/.dbt:z
+      - /run/user/1000/podman/podman.sock:/var/run/docker.sock
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLt0nfdstY=
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__WEBSERVER__SECRET_KEY=supersecretkey
+      - LOAD_EX=n
+      - ALPHAVANTAGE_API_KEY=FO1Y6G7WBGLAYNWV
+      - DEST_DB_HOST=destination_postgres
+      - DEST_DB_PORT=5432
+      - DEST_DB_NAME=destination_db
+      - DEST_DB_USER=postgres
+      - DEST_DB_PASSWORD=secret
+    command: scheduler
+    restart: unless-stopped
+
+  elt:
+    build:
+      context: ./elt
+    networks:
+      - elt_network
+    depends_on:
+      destination_postgres:
+        condition: service_healthy
+    volumes:
+      - ./elt:/app:z
+    environment:
+      - DEST_DB_HOST=destination_postgres
+      - DEST_DB_PORT=5432
+      - DEST_DB_NAME=destination_db
+      - DEST_DB_USER=postgres
+      - DEST_DB_PASSWORD=secret
+      - ALPHAVANTAGE_API_KEY=FO1Y6G7WBGLAYNWV
+
+  dbt:
+    build:
+      context: ./dbt
+    networks:
+      - elt_network
+    depends_on:
+      destination_postgres:
+        condition: service_healthy
+    volumes:
+      - ./dbt:/usr/app/dbt:z
+      - ./dbt/profiles.yml:/root/.dbt/profiles.yml:z
+
+networks:
+  elt_network:
+    driver: bridge
+
+volumes:
+  airflow_db_data:
+  dest_pg_data:

@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: marts
+    database: destination_db
+    schema: marts
+    tables:
+      - name: dim_date
+      - name: dim_etf
+      - name: dim_market
+
+  - name: raw
+    database: destination_db
+    schema: raw
+    tables:
+      - name: etf_prices
+

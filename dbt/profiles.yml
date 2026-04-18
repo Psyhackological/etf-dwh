@@ -1,0 +1,13 @@
+etf_dwh:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: destination_postgres
+      user: postgres
+      password: secret
+      port: 5432
+      dbname: destination_db
+      schema: public
+      threads: 1
+

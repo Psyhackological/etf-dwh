@@ -1,0 +1,10 @@
+FROM docker.io/python:3.11-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+        requests \
+        psycopg2-binary
+
+CMD ["python", "elt_script.py"]
