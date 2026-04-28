@@ -1,3 +1,3 @@
-SELECT symbol, volatility_stddev, return_30d_pct, stability_rank
+SELECT symbol, volatility_stddev, return_30d_pct
 FROM marts.report_volatility_ranking
-ORDER BY stability_rank ASC;
+ORDER BY volatility_stddev DESC;
