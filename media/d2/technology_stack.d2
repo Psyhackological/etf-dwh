@@ -1,0 +1,53 @@
+direction: down
+
+source: "Alpha Vantage API" {
+  shape: cloud
+  style.fill: "#dbeafe"
+  style.stroke: "#3b82f6"
+}
+
+elt: "elt_script.py" {
+  style.fill: "#fef9c3"
+  style.stroke: "#ca8a04"
+}
+
+db: "PostgreSQL 17" {
+  shape: cylinder
+  style.fill: "#dcfce7"
+  style.stroke: "#16a34a"
+}
+
+dbt_tool: "dbt 1.8" {
+  style.fill: "#fce7f3"
+  style.stroke: "#db2777"
+}
+
+airflow: "Apache Airflow 2.9" {
+  style.fill: "#ede9fe"
+  style.stroke: "#7c3aed"
+}
+
+metabase: "Metabase 0.52" {
+  style.fill: "#fff7ed"
+  style.stroke: "#ea580c"
+}
+
+infra: "Podman Compose" {
+  shape: package
+  style.fill: "#f1f5f9"
+  style.stroke: "#64748b"
+}
+
+source   -> elt:      "HTTP / JSON"
+elt      -> db:       "INSERT / UPSERT"
+db       -> dbt_tool: "SELECT raw.*"
+dbt_tool -> db:       "CREATE TABLE marts.*"
+db       -> metabase: "SQL queries"
+
+airflow  -> elt:      "PythonOperator"
+airflow  -> dbt_tool: "BashOperator"
+
+infra -> source:   {style.stroke-dash: 4}
+infra -> db:       {style.stroke-dash: 4}
+infra -> airflow:  {style.stroke-dash: 4}
+infra -> metabase: {style.stroke-dash: 4}

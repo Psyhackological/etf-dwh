@@ -1,0 +1,72 @@
+direction: right
+
+# ── FACT TABLE ──────────────────────────────────────────
+fact_etf_prices: {
+  shape: sql_table
+  label: "fact_etf_prices (~500 rekordów)"
+
+  fact_key:         "SERIAL          PK"
+  date_key:         "INT             FK"
+  etf_key:          "INT             FK"
+  market_key:       "INT             FK"
+  open:             "NUMERIC(12,4)"
+  high:             "NUMERIC(12,4)"
+  low:              "NUMERIC(12,4)"
+  close:            "NUMERIC(12,4)"
+  volume:           "BIGINT"
+  daily_change:     "NUMERIC(12,4)   miara"
+  daily_change_pct: "NUMERIC(8,4)    miara"
+  daily_spread_pct: "NUMERIC(8,4)    miara"
+  loaded_at:        "TIMESTAMP"
+}
+
+# ── DIMENSIONS ──────────────────────────────────────────
+dim_date: {
+  shape: sql_table
+  label: "dim_date (~4000 rekordów, 2020-2030)"
+
+  date_key:       "INT (YYYYMMDD)  PK"
+  full_date:      "DATE"
+  year:           "INT"
+  quarter:        "INT"
+  month:          "INT"
+  month_name:     "VARCHAR(20)"
+  week:           "INT"
+  day_name:       "VARCHAR(20)"
+  is_weekend:     "BOOLEAN"
+  is_trading_day: "BOOLEAN"
+}
+
+dim_etf: {
+  shape: sql_table
+  label: "dim_etf (SCD Type 2)"
+
+  etf_key:       "SERIAL          PK"
+  symbol:        "VARCHAR(10)"
+  etf_name:      "VARCHAR(100)"
+  category:      "VARCHAR(50)"
+  index_tracked: "VARCHAR(100)"
+  currency:      "VARCHAR(10)"
+  valid_from:    "DATE            SCD2"
+  valid_to:      "DATE            SCD2"
+  is_current:    "BOOLEAN         SCD2"
+}
+
+dim_market: {
+  shape: sql_table
+  label: "dim_market (NYSE / NASDAQ)"
+
+  market_key:   "SERIAL          PK"
+  market_code:  "VARCHAR(10)"
+  market_name:  "VARCHAR(100)"
+  country:      "VARCHAR(50)"
+  timezone:     "VARCHAR(50)"
+  market_open:  "TIME"
+  market_close: "TIME"
+  currency:     "VARCHAR(10)"
+}
+
+# ── RELACJE ─────────────────────────────────────────────
+fact_etf_prices.date_key   -> dim_date.date_key
+fact_etf_prices.etf_key    -> dim_etf.etf_key
+fact_etf_prices.market_key -> dim_market.market_key

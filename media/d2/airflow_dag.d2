@@ -1,0 +1,38 @@
+direction: right
+
+extract: "extract_and_load_raw" {
+  style.fill: "#fef9c3"
+  style.stroke: "#ca8a04"
+}
+
+staging: "dbt_staging" {
+  style.fill: "#fce7f3"
+  style.stroke: "#db2777"
+}
+
+facts: "dbt_facts" {
+  style.fill: "#fce7f3"
+  style.stroke: "#db2777"
+}
+
+reports: "dbt_reports" {
+  style.fill: "#fce7f3"
+  style.stroke: "#db2777"
+}
+
+olap: "dbt_olap" {
+  style.fill: "#fce7f3"
+  style.stroke: "#db2777"
+}
+
+tests: "dbt_test" {
+  style.fill: "#dcfce7"
+  style.stroke: "#16a34a"
+}
+
+extract -> staging
+staging -> facts
+facts   -> reports
+facts   -> olap
+reports -> tests
+olap    -> tests
